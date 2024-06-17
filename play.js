@@ -3,21 +3,30 @@ const context = canvas.getContext('2d');
 const leftButton = document.getElementById('leftButton');
 const rightButton = document.getElementById('rightButton');
 
-let characterX = canvas.width / 2;
-const characterY = canvas.height - 50;
-const characterWidth = 30;
-const characterHeight = 30;
 const trackWidth = 20;
-const trackSpacing = canvas.width / 3; // Adjusted for 1/3 spacing
-let trackOffset = 0;
 const scrollSpeed = 2;
+const trolleyWidth = 40;
+const trolleyHeight = 60;
+let trackOffset = 0;
+const tracks = [canvas.width / 3, canvas.width / 2, 2 * canvas.width / 3];
+let currentTrackIndex = 1; // Start at the center track
 
+function getTrolleyY() {
+    return window.innerHeight - (window.innerHeight * 0.1) - (1 * window.innerHeight / 100);
+}
+
+// Adjust canvas size
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    // Recalculate track positions
+    tracks[0] = canvas.width / 3;
+    tracks[1] = canvas.width / 2;
+    tracks[2] = 2 * canvas.width / 3;
     drawScene();
 }
 
+// Draw a single track at the specified x position
 function drawTrack(x) {
     context.fillStyle = '#6f4e37'; // Brown for railroad tracks
     for (let y = -canvas.height; y < canvas.height * 2; y += 40) {
@@ -25,17 +34,26 @@ function drawTrack(x) {
     }
 }
 
+// Draw the trolley car
+function drawTrolley() {
+    const trolleyX = tracks[currentTrackIndex];
+    const trolleyY = getTrolleyY();
+    context.fillStyle = '#d9534f'; // Red for the trolley car
+    context.fillRect(trolleyX - trolleyWidth / 2, trolleyY, trolleyWidth, trolleyHeight);
+}
+
+// Draw the entire scene
 function drawScene() {
     context.clearRect(0, 0, canvas.width, canvas.height);
     // Draw three tracks
-    drawTrack(canvas.width / 3); // Left track, 1/3 from left side
-    drawTrack(canvas.width / 2); // Middle track, center of the canvas
-    drawTrack(2 * canvas.width / 3); // Right track, 1/3 from right side
-    // Draw character
-    context.fillStyle = '#f2eecb'; // Light guacamole color
-    context.fillRect(characterX, characterY, characterWidth, characterHeight);
+    drawTrack(tracks[0]); // Left track
+    drawTrack(tracks[1]); // Center track
+    drawTrack(tracks[2]); // Right track
+    // Draw the trolley car
+    drawTrolley();
 }
 
+// Update the scene
 function updateScene() {
     trackOffset += scrollSpeed;
     if (trackOffset >= 40) {
@@ -45,25 +63,36 @@ function updateScene() {
     requestAnimationFrame(updateScene);
 }
 
+// Move the trolley car to the left track
 function moveLeft() {
-    characterX -= 10;
-    if (characterX < 0) {
-        characterX = 0;
+    if (currentTrackIndex > 0) {
+        currentTrackIndex--;
+        drawScene();
     }
-    drawScene();
 }
 
+// Move the trolley car to the right track
 function moveRight() {
-    characterX += 10;
-    if (characterX + characterWidth > canvas.width) {
-        characterX = canvas.width - characterWidth;
+    if (currentTrackIndex < tracks.length - 1) {
+        currentTrackIndex++;
+        drawScene();
     }
-    drawScene();
 }
 
-leftButton.addEventListener('click', moveLeft);
-rightButton.addEventListener('click', moveRight);
-
+// Initialize the canvas size
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 requestAnimationFrame(updateScene);
+
+// Event listeners for buttons
+leftButton.addEventListener('click', moveLeft);
+rightButton.addEventListener('click', moveRight);
+
+// Event listener for arrow keys
+window.addEventListener('keydown', function(event) {
+    if (event.key === 'ArrowLeft') {
+        moveLeft();
+    } else if (event.key === 'ArrowRight') {
+        moveRight();
+    }
+});
